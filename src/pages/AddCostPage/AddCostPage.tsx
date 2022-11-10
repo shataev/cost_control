@@ -1,17 +1,26 @@
 import { Grid, TextField, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import { ChangeEvent, useState } from 'react';
+import axios from 'axios';
+import { Cost } from './AddCostPage.types';
 
 const inputStyles = {
   width: 300
 };
 
+const costInitialValue:Cost = {
+  cost: '',
+  product: '',
+  comment: ''
+};
+
+// TODO: обработать ошибки запроса
+// TODO: прикрутить лоадер
+// TODO: вынести в конфиг состав формы
 export const AddCostPage = () => {
-  const [cost, setCost] = useState({
-    cost: 0,
-    product: '',
-    comment: ''
-  });
+  const [ pending, setPending ]= useState(false);
+
+  const [cost, setCost] = useState(costInitialValue);
 
   const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -25,11 +34,33 @@ export const AddCostPage = () => {
   };
 
   const onSubmit = () => {
-    console.log(cost);
+    setPending(true);
+
+    axios.post(
+      '/cost',
+      {
+        data: {
+          ...cost
+        }
+      }
+    )
+      .then(response => {
+        setPending(false);
+        setCost(costInitialValue);
+
+        console.log(response);
+      })
+      .catch(e => {
+        setPending(false);
+        setCost(costInitialValue);
+
+        console.log(e);
+      });
   };
 
   return (
     <Grid item xs={12} container spacing={3} direction={'column'} alignItems={'center'}>
+      {pending && <div>Loading...</div>}
       <Grid item>
         <Typography variant={'h4'} fontWeight={700}>Потрачено</Typography>
       </Grid>
@@ -40,6 +71,7 @@ export const AddCostPage = () => {
           placeholder='Сумма'
           sx={inputStyles}
           type='number'
+          value={cost['cost']}
           onChange={onFieldChange}
         />
       </Grid>
@@ -49,6 +81,7 @@ export const AddCostPage = () => {
           size={'small'}
           sx={inputStyles}
           placeholder='На что'
+          value={cost['product']}
           onChange={onFieldChange}
         />
       </Grid>
@@ -59,6 +92,7 @@ export const AddCostPage = () => {
           placeholder='Комментарий'
           sx={inputStyles}
           multiline
+          value={cost['comment']}
           onChange={onFieldChange}
         />
       </Grid>
